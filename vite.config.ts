@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Force the Nitro server build to target Vercel when deploying from our own
+  // infra (outside the Lovable sandbox). Without this, a self-deploy produces a
+  // Vite-only build with no server -> Vercel returns 404 NOT_FOUND.
+  nitro: { preset: "vercel" },
 });
