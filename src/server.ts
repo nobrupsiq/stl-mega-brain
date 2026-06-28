@@ -102,8 +102,17 @@ async function handleLogin(request: Request): Promise<Response> {
     return Response.json({ ok: false, error: "Digite um e-mail válido." }, { status: 400 });
   }
 
-  let allowed = false;
-  if (isRedisConfigured()) {
+  // 1) Liberação manual via env var (ACCESS_ALLOWED_EMAILS, separada por vírgula).
+  //    Funciona independente do banco — ideal pra teste e cortesias.
+  const manualAllow = (process.env.ACCESS_ALLOWED_EMAILS ?? "")
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  let allowed = manualAllow.includes(email);
+
+  // 2) Lista de pagos no banco (webhook da GGCheckout grava aqui).
+  if (!allowed && isRedisConfigured()) {
     try {
       allowed = await isPaidEmail(email);
     } catch (error) {
@@ -113,9 +122,9 @@ async function handleLogin(request: Request): Promise<Response> {
         { status: 503 },
       );
     }
-  } else if (process.env.NODE_ENV !== "production") {
-    // DEV: sem Upstash configurado, libera qualquer e-mail válido pra testar a UI.
-    console.warn("[acesso] Upstash não configurado — liberando em modo DEV.");
+  } else if (!allowed && process.env.NODE_ENV !== "production") {
+    // DEV local sem banco: libera qualquer e-mail válido pra testar a UI.
+    console.warn("[acesso] banco não configurado — liberando em modo DEV.");
     allowed = true;
   }
 

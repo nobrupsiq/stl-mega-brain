@@ -291,8 +291,8 @@ async function handleLogin(request) {
 		ok: false,
 		error: "Digite um e-mail válido."
 	}, { status: 400 });
-	let allowed = false;
-	if (isRedisConfigured()) try {
+	let allowed = (process.env.ACCESS_ALLOWED_EMAILS ?? "").toLowerCase().split(",").map((s) => s.trim()).filter(Boolean).includes(email);
+	if (!allowed && isRedisConfigured()) try {
 		allowed = await isPaidEmail(email);
 	} catch (error) {
 		console.error(error);
