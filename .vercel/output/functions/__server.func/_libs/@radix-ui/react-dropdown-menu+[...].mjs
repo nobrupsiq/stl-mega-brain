@@ -1,6 +1,6 @@
-import { r as __toESM } from "../../_runtime.mjs";
+import { o as __toESM } from "../../_runtime.mjs";
 import { a as offset, c as useFloating, i as limitShift, l as require_react_dom, n as flip, o as shift, r as hide, s as size, t as arrow, u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { a as createSlot, c as require_jsx_runtime, n as Primitive, o as composeRefs, r as dispatchDiscreteCustomEvent, s as useComposedRefs, t as Root$1 } from "./react-arrow+[...].mjs";
+import { a as useComposedRefs, i as composeRefs, n as Primitive, o as require_jsx_runtime, r as dispatchDiscreteCustomEvent, t as Root$1 } from "./react-arrow+[...].mjs";
 import { t as composeEventHandlers } from "../radix-ui__primitive.mjs";
 import { n as createContextScope, t as createCollection } from "./react-collection+[...].mjs";
 import { t as useDirection } from "../radix-ui__react-direction.mjs";
@@ -65,24 +65,15 @@ function isFunction(value) {
 //#endregion
 //#region node_modules/@radix-ui/react-focus-guards/dist/index.mjs
 var count$1 = 0;
-var guards = null;
 function useFocusGuards() {
 	import_react.useEffect(() => {
-		if (!guards) guards = {
-			start: createFocusGuard(),
-			end: createFocusGuard()
-		};
-		const { start, end } = guards;
-		if (document.body.firstElementChild !== start) document.body.insertAdjacentElement("afterbegin", start);
-		if (document.body.lastElementChild !== end) document.body.insertAdjacentElement("beforeend", end);
+		const edgeGuards = document.querySelectorAll("[data-radix-focus-guard]");
+		document.body.insertAdjacentElement("afterbegin", edgeGuards[0] ?? createFocusGuard());
+		document.body.insertAdjacentElement("beforeend", edgeGuards[1] ?? createFocusGuard());
 		count$1++;
 		return () => {
-			if (count$1 === 1) {
-				guards?.start.remove();
-				guards?.end.remove();
-				guards = null;
-			}
-			count$1 = Math.max(0, count$1 - 1);
+			if (count$1 === 1) document.querySelectorAll("[data-radix-focus-guard]").forEach((node) => node.remove());
+			count$1--;
 		};
 	}, []);
 }
@@ -341,13 +332,10 @@ var [PopperProvider, usePopperContext] = createPopperContext(POPPER_NAME);
 var Popper = (props) => {
 	const { __scopePopper, children } = props;
 	const [anchor, setAnchor] = import_react.useState(null);
-	const [placementState, setPlacementState] = import_react.useState(void 0);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopperProvider, {
 		scope: __scopePopper,
 		anchor,
 		onAnchorChange: setAnchor,
-		placementState,
-		setPlacementState,
 		children
 	});
 };
@@ -357,24 +345,14 @@ var PopperAnchor = import_react.forwardRef((props, forwardedRef) => {
 	const { __scopePopper, virtualRef, ...anchorProps } = props;
 	const context = usePopperContext(ANCHOR_NAME$1, __scopePopper);
 	const ref = import_react.useRef(null);
-	const onAnchorChange = context.onAnchorChange;
-	const composedRefs = useComposedRefs(forwardedRef, import_react.useCallback((node) => {
-		ref.current = node;
-		if (node) onAnchorChange(node);
-	}, [onAnchorChange]));
+	const composedRefs = useComposedRefs(forwardedRef, ref);
 	const anchorRef = import_react.useRef(null);
 	import_react.useEffect(() => {
-		if (!virtualRef) return;
 		const previousAnchor = anchorRef.current;
-		anchorRef.current = virtualRef.current;
-		if (previousAnchor !== anchorRef.current) onAnchorChange(anchorRef.current);
+		anchorRef.current = virtualRef?.current || ref.current;
+		if (previousAnchor !== anchorRef.current) context.onAnchorChange(anchorRef.current);
 	});
-	const sideAndAlign = context.placementState && getSideAndAlignFromPlacement(context.placementState);
-	const placedSide = sideAndAlign?.[0];
-	const placedAlign = sideAndAlign?.[1];
 	return virtualRef ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.div, {
-		"data-radix-popper-side": placedSide,
-		"data-radix-popper-align": placedAlign,
 		...anchorProps,
 		ref: composedRefs
 	});
@@ -446,18 +424,10 @@ var PopperContent = import_react.forwardRef((props, forwardedRef) => {
 			}),
 			hideWhenDetached && hide({
 				strategy: "referenceHidden",
-				...detectOverflowOptions,
-				boundary: hasExplicitBoundaries ? detectOverflowOptions.boundary : void 0
+				...detectOverflowOptions
 			})
 		]
 	});
-	const setPlacementState = context.setPlacementState;
-	useLayoutEffect2(() => {
-		setPlacementState(placement);
-		return () => {
-			setPlacementState(void 0);
-		};
-	}, [placement, setPlacementState]);
 	const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
 	const handlePlaced = useCallbackRef$1(onPlaced);
 	useLayoutEffect2(() => {
@@ -478,7 +448,7 @@ var PopperContent = import_react.forwardRef((props, forwardedRef) => {
 			transform: isPositioned ? floatingStyles.transform : "translate(0, -200%)",
 			minWidth: "max-content",
 			zIndex: contentZIndex,
-			"--radix-popper-transform-origin": [middlewareData.transformOrigin?.x, middlewareData.transformOrigin?.y].join(" "),
+			["--radix-popper-transform-origin"]: [middlewareData.transformOrigin?.x, middlewareData.transformOrigin?.y].join(" "),
 			...middlewareData.hide?.referenceHidden && {
 				visibility: "hidden",
 				pointerEvents: "none"
@@ -488,7 +458,6 @@ var PopperContent = import_react.forwardRef((props, forwardedRef) => {
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopperContentProvider, {
 			scope: __scopePopper,
 			placedSide,
-			placedAlign,
 			onArrowChange: setArrow,
 			arrowX,
 			arrowY,
@@ -624,7 +593,7 @@ var Presence = (props) => {
 	const { present, children } = props;
 	const presence = usePresence(present);
 	const child = typeof children === "function" ? children({ present: presence.isPresent }) : import_react.Children.only(children);
-	const ref = useStableComposedRefs(presence.ref, getElementRef(child));
+	const ref = useComposedRefs(presence.ref, getElementRef$1(child));
 	return typeof children === "function" || presence.isPresent ? import_react.cloneElement(child, { ref }) : null;
 };
 Presence.displayName = "Presence";
@@ -700,34 +669,10 @@ function usePresence(present) {
 		}, [])
 	};
 }
-function setRef(ref, value) {
-	if (typeof ref === "function") return ref(value);
-	else if (ref !== null && ref !== void 0) ref.current = value;
-}
-function useStableComposedRefs(...refs) {
-	const refsRef = import_react.useRef(refs);
-	refsRef.current = refs;
-	return import_react.useCallback((node) => {
-		const currentRefs = refsRef.current;
-		let hasCleanup = false;
-		const cleanups = currentRefs.map((ref) => {
-			const cleanup = setRef(ref, node);
-			if (!hasCleanup && typeof cleanup === "function") hasCleanup = true;
-			return cleanup;
-		});
-		if (hasCleanup) return () => {
-			for (let i = 0; i < cleanups.length; i++) {
-				const cleanup = cleanups[i];
-				if (typeof cleanup === "function") cleanup();
-				else setRef(currentRefs[i], null);
-			}
-		};
-	}, []);
-}
 function getAnimationName(styles) {
 	return styles?.animationName || "none";
 }
-function getElementRef(element) {
+function getElementRef$1(element) {
 	let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
 	let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
 	if (mayWarn) return element.ref;
@@ -920,6 +865,89 @@ function wrapArray$1(array, startIndex) {
 }
 var Root = RovingFocusGroup;
 var Item = RovingFocusGroupItem;
+//#endregion
+//#region node_modules/@radix-ui/react-menu/node_modules/@radix-ui/react-slot/dist/index.mjs
+// @__NO_SIDE_EFFECTS__
+function createSlot(ownerName) {
+	const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
+	const Slot2 = import_react.forwardRef((props, forwardedRef) => {
+		const { children, ...slotProps } = props;
+		const childrenArray = import_react.Children.toArray(children);
+		const slottable = childrenArray.find(isSlottable);
+		if (slottable) {
+			const newElement = slottable.props.children;
+			const newChildren = childrenArray.map((child) => {
+				if (child === slottable) {
+					if (import_react.Children.count(newElement) > 1) return import_react.Children.only(null);
+					return import_react.isValidElement(newElement) ? newElement.props.children : null;
+				} else return child;
+			});
+			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlotClone, {
+				...slotProps,
+				ref: forwardedRef,
+				children: import_react.isValidElement(newElement) ? import_react.cloneElement(newElement, void 0, newChildren) : null
+			});
+		}
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlotClone, {
+			...slotProps,
+			ref: forwardedRef,
+			children
+		});
+	});
+	Slot2.displayName = `${ownerName}.Slot`;
+	return Slot2;
+}
+// @__NO_SIDE_EFFECTS__
+function createSlotClone(ownerName) {
+	const SlotClone = import_react.forwardRef((props, forwardedRef) => {
+		const { children, ...slotProps } = props;
+		if (import_react.isValidElement(children)) {
+			const childrenRef = getElementRef(children);
+			const props2 = mergeProps(slotProps, children.props);
+			if (children.type !== import_react.Fragment) props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
+			return import_react.cloneElement(children, props2);
+		}
+		return import_react.Children.count(children) > 1 ? import_react.Children.only(null) : null;
+	});
+	SlotClone.displayName = `${ownerName}.SlotClone`;
+	return SlotClone;
+}
+var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
+function isSlottable(child) {
+	return import_react.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+}
+function mergeProps(slotProps, childProps) {
+	const overrideProps = { ...childProps };
+	for (const propName in childProps) {
+		const slotPropValue = slotProps[propName];
+		const childPropValue = childProps[propName];
+		if (/^on[A-Z]/.test(propName)) {
+			if (slotPropValue && childPropValue) overrideProps[propName] = (...args) => {
+				const result = childPropValue(...args);
+				slotPropValue(...args);
+				return result;
+			};
+			else if (slotPropValue) overrideProps[propName] = slotPropValue;
+		} else if (propName === "style") overrideProps[propName] = {
+			...slotPropValue,
+			...childPropValue
+		};
+		else if (propName === "className") overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(" ");
+	}
+	return {
+		...slotProps,
+		...overrideProps
+	};
+}
+function getElementRef(element) {
+	let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
+	let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+	if (mayWarn) return element.ref;
+	getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
+	mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+	if (mayWarn) return element.props.ref;
+	return element.props.ref || element.ref;
+}
 //#endregion
 //#region node_modules/aria-hidden/dist/es2015/index.js
 var getDefaultParent = function(originalTarget) {
@@ -1770,12 +1798,6 @@ var Menu = (props) => {
 			document.removeEventListener("pointermove", handlePointer, { capture: true });
 		};
 	}, []);
-	import_react.useEffect(() => {
-		if (!open) return;
-		const handleBlur = () => handleOpenChange(false);
-		window.addEventListener("blur", handleBlur);
-		return () => window.removeEventListener("blur", handleBlur);
-	}, [open, handleOpenChange]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Root2$1, {
 		...popperScope,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuProvider, {
@@ -1879,7 +1901,7 @@ var MenuRootContentNonModal = import_react.forwardRef((props, forwardedRef) => {
 		onDismiss: () => context.onOpenChange(false)
 	});
 });
-var Slot = createSlot("MenuContent.ScrollLock");
+var Slot = /* @__PURE__ */ createSlot("MenuContent.ScrollLock");
 var MenuContentImpl = import_react.forwardRef((props, forwardedRef) => {
 	const { __scopeMenu, loop = false, trapFocus, onOpenAutoFocus, onCloseAutoFocus, disableOutsidePointerEvents, onEntryFocus, onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside, onDismiss, disableOutsideScroll, ...contentProps } = props;
 	const context = useMenuContext(CONTENT_NAME$1, __scopeMenu);
@@ -2279,7 +2301,7 @@ var MenuSubTrigger = import_react.forwardRef((props, forwardedRef) => {
 			id: subContext.triggerId,
 			"aria-haspopup": "menu",
 			"aria-expanded": context.open,
-			"aria-controls": context.open ? subContext.contentId : void 0,
+			"aria-controls": subContext.contentId,
 			"data-state": getOpenState(context.open),
 			...props,
 			ref: composeRefs(forwardedRef, subContext.onTriggerChange),
@@ -2358,7 +2380,7 @@ MenuSubTrigger.displayName = SUB_TRIGGER_NAME$1;
 var SUB_CONTENT_NAME$1 = "MenuSubContent";
 var MenuSubContent = import_react.forwardRef((props, forwardedRef) => {
 	const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
-	const { forceMount = portalContext.forceMount, align = "start", ...subContentProps } = props;
+	const { forceMount = portalContext.forceMount, ...subContentProps } = props;
 	const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
 	const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
 	const subContext = useMenuSubContext(SUB_CONTENT_NAME$1, props.__scopeMenu);
@@ -2375,7 +2397,7 @@ var MenuSubContent = import_react.forwardRef((props, forwardedRef) => {
 					"aria-labelledby": subContext.triggerId,
 					...subContentProps,
 					ref: composedRefs,
-					align,
+					align: "start",
 					side: rootContext.dir === "rtl" ? "left" : "right",
 					disableOutsidePointerEvents: false,
 					disableOutsideScroll: false,

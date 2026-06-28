@@ -1,4 +1,6 @@
+import { t as require_built } from "../_libs/ioredis+[...].mjs";
 //#region node_modules/.nitro/vite/services/ssr/index.js
+var import_built = require_built();
 var lastCapturedError;
 var TTL_MS = 5e3;
 function record(error) {
@@ -101,56 +103,41 @@ function readCookie(cookieHeader, name) {
 	}
 }
 var TTL_SEC = DEFAULT_TTL_SEC;
-function getConfig() {
-	return {
-		url: process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? "",
-		token: process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? ""
-	};
+function getUrl() {
+	const direct = process.env.REDIS_URL ?? process.env.REDIS_URI ?? process.env.REDIS_TLS_URL ?? process.env.KV_URL;
+	if (direct) return direct;
+	for (const value of Object.values(process.env)) if (typeof value === "string" && /^rediss?:\/\//.test(value)) return value;
+	return "";
 }
 function isRedisConfigured() {
-	const { url, token } = getConfig();
-	return Boolean(url && token);
+	return Boolean(getUrl());
 }
-async function command(args) {
-	const { url, token } = getConfig();
-	if (!url || !token) throw new Error("Upstash não configurado: defina UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN.");
-	const res = await fetch(url, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${token}`,
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(args)
-	});
-	if (!res.ok) throw new Error(`Upstash erro ${res.status}: ${await res.text()}`);
-	const data = await res.json();
-	if (data.error) throw new Error(`Upstash: ${data.error}`);
-	return data.result;
+var client = null;
+function getClient() {
+	const url = getUrl();
+	if (!url) throw new Error("Redis não configurado: defina REDIS_URL.");
+	if (!client) {
+		client = new import_built.Redis(url, {
+			lazyConnect: true,
+			maxRetriesPerRequest: 2,
+			connectTimeout: 1e4
+		});
+		client.on("error", (err) => console.error("[redis]", err));
+	}
+	return client;
 }
 var PAID_KEY = "paid_emails";
 function normalize(email) {
 	return email.trim().toLowerCase();
 }
 async function addPaidEmail(email) {
-	await command([
-		"SADD",
-		PAID_KEY,
-		normalize(email)
-	]);
+	await getClient().sadd(PAID_KEY, normalize(email));
 }
 async function removePaidEmail(email) {
-	await command([
-		"SREM",
-		PAID_KEY,
-		normalize(email)
-	]);
+	await getClient().srem(PAID_KEY, normalize(email));
 }
 async function isPaidEmail(email) {
-	return await command([
-		"SISMEMBER",
-		PAID_KEY,
-		normalize(email)
-	]) === 1;
+	return await getClient().sismember(PAID_KEY, normalize(email)) === 1;
 }
 function asObject(value) {
 	return typeof value === "object" && value !== null ? value : void 0;
@@ -228,7 +215,7 @@ async function handleGgcheckoutWebhook(request) {
 }
 var serverEntryPromise;
 async function getServerEntry() {
-	if (!serverEntryPromise) serverEntryPromise = import("./server-DRfVODVa.mjs").then((m) => m.default ?? m);
+	if (!serverEntryPromise) serverEntryPromise = import("./server-CCrBD8qV.mjs").then((m) => m.default ?? m);
 	return serverEntryPromise;
 }
 async function normalizeCatastrophicSsrResponse(response) {

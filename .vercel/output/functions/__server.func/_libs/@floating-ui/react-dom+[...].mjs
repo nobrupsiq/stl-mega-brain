@@ -1,4 +1,4 @@
-import { r as __toESM, t as __commonJSMin } from "../../_runtime.mjs";
+import { o as __toESM, t as __commonJSMin } from "../../_runtime.mjs";
 import { a as hide$1, c as shift$1, i as flip$1, l as size$1, o as limitShift$1, r as computePosition, s as offset$1, t as arrow$2 } from "./dom+[...].mjs";
 //#region node_modules/react/cjs/react.production.js
 /**
@@ -357,7 +357,7 @@ var require_react_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.useTransition = function() {
 		return ReactSharedInternals.H.useTransition();
 	};
-	exports.version = "19.2.7";
+	exports.version = "19.2.5";
 }));
 //#endregion
 //#region node_modules/react/index.js
@@ -503,7 +503,7 @@ var require_react_dom_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.useFormStatus = function() {
 		return ReactSharedInternals.H.useHostTransitionStatus();
 	};
-	exports.version = "19.2.7";
+	exports.version = "19.2.5";
 }));
 //#endregion
 //#region node_modules/react-dom/index.js

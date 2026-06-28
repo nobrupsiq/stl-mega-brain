@@ -1,6 +1,6 @@
-import { r as __toESM } from "../../_runtime.mjs";
+import { o as __toESM } from "../../_runtime.mjs";
 import { u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime, n as Primitive, r as dispatchDiscreteCustomEvent, s as useComposedRefs } from "./react-arrow+[...].mjs";
+import { a as useComposedRefs, n as Primitive, o as require_jsx_runtime, r as dispatchDiscreteCustomEvent } from "./react-arrow+[...].mjs";
 import { t as composeEventHandlers } from "../radix-ui__primitive.mjs";
 //#region node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
@@ -9,7 +9,7 @@ function useCallbackRef(callback) {
 	import_react.useEffect(() => {
 		callbackRef.current = callback;
 	});
-	return import_react.useMemo(() => ((...args) => callbackRef.current?.(...args)), []);
+	return import_react.useMemo(() => (...args) => callbackRef.current?.(...args), []);
 }
 //#endregion
 //#region node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs
@@ -34,11 +34,10 @@ var originalBodyPointerEvents;
 var DismissableLayerContext = import_react.createContext({
 	layers: /* @__PURE__ */ new Set(),
 	layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
-	branches: /* @__PURE__ */ new Set(),
-	dismissableSurfaces: /* @__PURE__ */ new Set()
+	branches: /* @__PURE__ */ new Set()
 });
 var DismissableLayer = import_react.forwardRef((props, forwardedRef) => {
-	const { disableOutsidePointerEvents = false, deferPointerDownOutside = false, onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside, onDismiss, ...layerProps } = props;
+	const { disableOutsidePointerEvents = false, onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside, onDismiss, ...layerProps } = props;
 	const context = import_react.useContext(DismissableLayerContext);
 	const [node, setNode] = import_react.useState(null);
 	const ownerDocument = node?.ownerDocument ?? globalThis?.document;
@@ -50,23 +49,15 @@ var DismissableLayer = import_react.forwardRef((props, forwardedRef) => {
 	const index = node ? layers.indexOf(node) : -1;
 	const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
 	const isPointerEventsEnabled = index >= highestLayerWithOutsidePointerEventsDisabledIndex;
-	const isDeferredPointerDownOutsideRef = import_react.useRef(false);
 	const pointerDownOutside = usePointerDownOutside((event) => {
 		const target = event.target;
-		if (!(target instanceof Node)) return;
 		const isPointerDownOnBranch = [...context.branches].some((branch) => branch.contains(target));
 		if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
 		onPointerDownOutside?.(event);
 		onInteractOutside?.(event);
 		if (!event.defaultPrevented) onDismiss?.();
-	}, {
-		ownerDocument,
-		deferPointerDownOutside,
-		isDeferredPointerDownOutsideRef,
-		dismissableSurfaces: context.dismissableSurfaces
-	});
+	}, ownerDocument);
 	const focusOutside = useFocusOutside((event) => {
-		if (deferPointerDownOutside && isDeferredPointerDownOutsideRef.current) return;
 		const target = event.target;
 		if ([...context.branches].some((branch) => branch.contains(target))) return;
 		onFocusOutside?.(event);
@@ -93,10 +84,7 @@ var DismissableLayer = import_react.forwardRef((props, forwardedRef) => {
 		context.layers.add(node);
 		dispatchUpdate();
 		return () => {
-			if (disableOutsidePointerEvents) {
-				context.layersWithOutsidePointerEventsDisabled.delete(node);
-				if (context.layersWithOutsidePointerEventsDisabled.size === 0) ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
-			}
+			if (disableOutsidePointerEvents && context.layersWithOutsidePointerEventsDisabled.size === 1) ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
 		};
 	}, [
 		node,
@@ -150,69 +138,25 @@ var DismissableLayerBranch = import_react.forwardRef((props, forwardedRef) => {
 	});
 });
 DismissableLayerBranch.displayName = BRANCH_NAME;
-function usePointerDownOutside(onPointerDownOutside, args) {
-	const { ownerDocument = globalThis?.document, deferPointerDownOutside = false, isDeferredPointerDownOutsideRef, dismissableSurfaces } = args;
+function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?.document) {
 	const handlePointerDownOutside = useCallbackRef(onPointerDownOutside);
 	const isPointerInsideReactTreeRef = import_react.useRef(false);
-	const isPointerDownOutsideRef = import_react.useRef(false);
-	const interceptedOutsideInteractionEventsRef = import_react.useRef(/* @__PURE__ */ new Map());
 	const handleClickRef = import_react.useRef(() => {});
 	import_react.useEffect(() => {
-		function resetOutsideInteraction() {
-			isPointerDownOutsideRef.current = false;
-			isDeferredPointerDownOutsideRef.current = false;
-			interceptedOutsideInteractionEventsRef.current.clear();
-		}
-		function isOutsideInteractionIntercepted() {
-			return Array.from(interceptedOutsideInteractionEventsRef.current.values()).some(Boolean);
-		}
-		function handleInteractionCapture(event) {
-			if (!isPointerDownOutsideRef.current) return;
-			const target = event.target;
-			if (!(target instanceof Node && [...dismissableSurfaces].some((surface) => surface.contains(target)))) interceptedOutsideInteractionEventsRef.current.set(event.type, true);
-			if (event.type === "click") window.setTimeout(() => {
-				if (isPointerDownOutsideRef.current) handleClickRef.current();
-			}, 0);
-		}
-		function handleInteractionBubble(event) {
-			if (isPointerDownOutsideRef.current) interceptedOutsideInteractionEventsRef.current.set(event.type, false);
-		}
 		const handlePointerDown = (event) => {
 			if (event.target && !isPointerInsideReactTreeRef.current) {
 				let handleAndDispatchPointerDownOutsideEvent2 = function() {
-					ownerDocument.removeEventListener("click", handleClickRef.current);
-					const wasOutsideInteractionIntercepted = isOutsideInteractionIntercepted();
-					resetOutsideInteraction();
-					if (!wasOutsideInteractionIntercepted) handleAndDispatchCustomEvent(POINTER_DOWN_OUTSIDE, handlePointerDownOutside, eventDetail, { discrete: true });
+					handleAndDispatchCustomEvent(POINTER_DOWN_OUTSIDE, handlePointerDownOutside, eventDetail, { discrete: true });
 				};
 				const eventDetail = { originalEvent: event };
-				isPointerDownOutsideRef.current = true;
-				isDeferredPointerDownOutsideRef.current = deferPointerDownOutside && event.button === 0;
-				interceptedOutsideInteractionEventsRef.current.clear();
-				if (!deferPointerDownOutside || event.button !== 0) handleAndDispatchPointerDownOutsideEvent2();
-				else {
+				if (event.pointerType === "touch") {
 					ownerDocument.removeEventListener("click", handleClickRef.current);
 					handleClickRef.current = handleAndDispatchPointerDownOutsideEvent2;
 					ownerDocument.addEventListener("click", handleClickRef.current, { once: true });
-				}
-			} else {
-				ownerDocument.removeEventListener("click", handleClickRef.current);
-				resetOutsideInteraction();
-			}
+				} else handleAndDispatchPointerDownOutsideEvent2();
+			} else ownerDocument.removeEventListener("click", handleClickRef.current);
 			isPointerInsideReactTreeRef.current = false;
 		};
-		const outsideInteractionEvents = [
-			"pointerup",
-			"mousedown",
-			"mouseup",
-			"touchstart",
-			"touchend",
-			"click"
-		];
-		for (const eventName of outsideInteractionEvents) {
-			ownerDocument.addEventListener(eventName, handleInteractionCapture, true);
-			ownerDocument.addEventListener(eventName, handleInteractionBubble);
-		}
 		const timerId = window.setTimeout(() => {
 			ownerDocument.addEventListener("pointerdown", handlePointerDown);
 		}, 0);
@@ -220,18 +164,8 @@ function usePointerDownOutside(onPointerDownOutside, args) {
 			window.clearTimeout(timerId);
 			ownerDocument.removeEventListener("pointerdown", handlePointerDown);
 			ownerDocument.removeEventListener("click", handleClickRef.current);
-			for (const eventName of outsideInteractionEvents) {
-				ownerDocument.removeEventListener(eventName, handleInteractionCapture, true);
-				ownerDocument.removeEventListener(eventName, handleInteractionBubble);
-			}
 		};
-	}, [
-		ownerDocument,
-		handlePointerDownOutside,
-		deferPointerDownOutside,
-		isDeferredPointerDownOutsideRef,
-		dismissableSurfaces
-	]);
+	}, [ownerDocument, handlePointerDownOutside]);
 	return { onPointerDownCapture: () => isPointerInsideReactTreeRef.current = true };
 }
 function useFocusOutside(onFocusOutside, ownerDocument = globalThis?.document) {

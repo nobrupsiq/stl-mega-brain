@@ -1,11 +1,6 @@
+import { o as NullProtoObj } from "./h3+rou3+srvx.mjs";
 import { PassThrough, Readable } from "node:stream";
-//#region node_modules/rou3/dist/index.mjs
-var NullProtoObj = /* @__PURE__ */ (() => {
-	const e = function() {};
-	return e.prototype = Object.create(null), Object.freeze(e.prototype), e;
-})();
-//#endregion
-//#region node_modules/srvx/dist/_chunks/_url.mjs
+//#region node_modules/h3-v2/node_modules/srvx/dist/_chunks/_url.mjs
 function lazyInherit(target, source, sourceKey) {
 	for (const key of [...Object.getOwnPropertyNames(source), ...Object.getOwnPropertySymbols(source)]) {
 		if (key === "constructor") continue;
@@ -34,6 +29,20 @@ function lazyInherit(target, source, sourceKey) {
 	}
 }
 var _needsNormRE = /(?:(?:^|\/)(?:\.|\.\.|%2e|%2e\.|\.%2e|%2e%2e)(?:\/|$))|[\\^\x80-\uffff]/i;
+/**
+* URL wrapper with fast paths to access to the following props:
+*
+*  - `url.pathname`
+*  - `url.search`
+*  - `url.searchParams`
+*  - `url.protocol`
+*
+* **NOTES:**
+*
+* - It is assumed that the input URL is **already encoded** and formatted from an HTTP request and contains no hash.
+* - Triggering the setters or getters on other props will deoptimize to full URL parsing.
+* - Changes to `searchParams` will be discarded as we don't track them.
+*/
 var FastURL = /* @__PURE__ */ (() => {
 	const NativeURL = globalThis.URL;
 	const FastURL = class URL {
@@ -81,11 +90,10 @@ var FastURL = /* @__PURE__ */ (() => {
 				const url = this.href;
 				const protoIndex = url.indexOf("://");
 				const pathnameIndex = protoIndex === -1 ? -1 : url.indexOf("/", protoIndex + 4);
-				const qIndex = pathnameIndex === -1 ? -1 : url.indexOf("?", pathnameIndex);
 				this.#pos = [
 					protoIndex,
 					pathnameIndex,
-					qIndex
+					pathnameIndex === -1 ? -1 : url.indexOf("?", pathnameIndex)
 				];
 			}
 			return this.#pos;
@@ -119,8 +127,7 @@ var FastURL = /* @__PURE__ */ (() => {
 			if (this.#protocol === void 0) {
 				const [protocolIndex] = this.#getPos();
 				if (protocolIndex === -1) return this._url.protocol;
-				const url = this.href;
-				this.#protocol = url.slice(0, protocolIndex + 1);
+				this.#protocol = this.href.slice(0, protocolIndex + 1);
 			}
 			return this.#protocol;
 		}
@@ -137,7 +144,12 @@ var FastURL = /* @__PURE__ */ (() => {
 	return FastURL;
 })();
 //#endregion
-//#region node_modules/srvx/dist/adapters/node.mjs
+//#region node_modules/h3-v2/node_modules/srvx/dist/adapters/node.mjs
+/**
+* Fast Response for Node.js runtime
+*
+* It is faster because in most cases it doesn't create a full Response instance.
+*/
 var NodeResponse = /* @__PURE__ */ (() => {
 	const NativeResponse = globalThis.Response;
 	const STATUS_CODES = globalThis.process?.getBuiltinModule?.("node:http")?.STATUS_CODES || {};
@@ -247,7 +259,7 @@ var NodeResponse = /* @__PURE__ */ (() => {
 	return NodeResponse;
 })();
 //#endregion
-//#region node_modules/h3/dist/h3.mjs
+//#region node_modules/h3-v2/dist/h3-Bz4OPZv_.mjs
 function decodePathname(pathname) {
 	return decodeURI(pathname.includes("%25") ? pathname.replace(/%25/g, "%2525") : pathname);
 }
@@ -394,7 +406,7 @@ function isJSONSerializable(value, _type) {
 var kNotFound = /* @__PURE__ */ Symbol.for("h3.notFound");
 var kHandled = /* @__PURE__ */ Symbol.for("h3.handled");
 function toResponse(val, event, config = {}) {
-	if (typeof val?.then === "function") return val.then((resolvedVal) => toResponse(resolvedVal, event, config), (r) => toResponse(typeof r === "number" ? new HTTPError({ status: r }) : r, event, config));
+	if (typeof val?.then === "function") return (val.catch?.((error) => error) || Promise.resolve(val)).then((resolvedVal) => toResponse(resolvedVal, event, config));
 	const response = prepareResponse(val, event, config);
 	if (typeof response?.then === "function") return toResponse(response, event, config);
 	const { onResponse } = config;
@@ -529,122 +541,5 @@ function errorResponse(error, debug, errHeaders) {
 		headers
 	});
 }
-function callMiddleware(event, middleware, handler, index = 0) {
-	if (index === middleware.length) return handler(event);
-	const fn = middleware[index];
-	let nextCalled;
-	let nextResult;
-	const next = () => {
-		if (nextCalled) return nextResult;
-		nextCalled = true;
-		nextResult = callMiddleware(event, middleware, handler, index + 1);
-		return nextResult;
-	};
-	const ret = fn(event, next);
-	return isUnhandledResponse(ret) ? next() : typeof ret?.then === "function" ? ret.then((resolved) => isUnhandledResponse(resolved) ? next() : resolved) : ret;
-}
-function isUnhandledResponse(val) {
-	return val === void 0 || val === kNotFound;
-}
-function toRequest(input, options) {
-	if (typeof input === "string") {
-		let url = input;
-		if (url[0] === "/") {
-			const headers = options?.headers ? new Headers(options.headers) : void 0;
-			const host = headers?.get("host") || "localhost";
-			url = `${headers?.get("x-forwarded-proto") === "https" ? "https" : "http"}://${host}${url}`;
-		}
-		return new Request(url, options);
-	} else if (options || input instanceof URL) return new Request(input, options);
-	return input;
-}
-function defineHandler(input) {
-	if (typeof input === "function") return handlerWithFetch(input);
-	const handler = input.handler || (input.fetch ? function _fetchHandler(event) {
-		return input.fetch(event.req);
-	} : NoHandler);
-	return Object.assign(handlerWithFetch(input.middleware?.length ? function _handlerMiddleware(event) {
-		return callMiddleware(event, input.middleware, handler);
-	} : handler), input);
-}
-function handlerWithFetch(handler) {
-	if ("fetch" in handler) return handler;
-	return Object.assign(handler, { fetch: (req) => {
-		if (typeof req === "string") req = new URL(req, "http://_");
-		if (req instanceof URL) req = new Request(req);
-		const event = new H3Event(req);
-		try {
-			return Promise.resolve(toResponse(handler(event), event));
-		} catch (error) {
-			return Promise.resolve(toResponse(error, event));
-		}
-	} });
-}
-function defineLazyEventHandler(loader) {
-	let handler;
-	let promise;
-	return defineHandler(function lazyHandler(event) {
-		return handler ? handler(event) : (promise ??= Promise.resolve(loader()).then(function resolveLazyHandler(r) {
-			handler = toEventHandler(r) || toEventHandler(r.default);
-			if (typeof handler !== "function") throw new TypeError("Invalid lazy handler", { cause: { resolved: r } });
-			return handler;
-		})).then((r) => r(event));
-	});
-}
-function toEventHandler(handler) {
-	if (typeof handler === "function") return handler;
-	if (typeof handler?.handler === "function" && handler.constructor?.["~h3"]) return handler.handler;
-	if (typeof handler?.fetch === "function") return function _fetchHandler(event) {
-		return handler.fetch(event.req);
-	};
-}
-var NoHandler = () => kNotFound;
-var H3Core = class {
-	static "~h3" = true;
-	config;
-	"~middleware";
-	"~routes" = [];
-	constructor(config = {}) {
-		this["~middleware"] = [];
-		this.config = config;
-		this.fetch = this.fetch.bind(this);
-		this.handler = this.handler.bind(this);
-	}
-	fetch(request) {
-		return this["~request"](request);
-	}
-	handler(event) {
-		const route = this["~findRoute"](event);
-		if (route) {
-			event.context.params = route.params;
-			event.context.matchedRoute = route.data;
-		}
-		const routeHandler = route?.data.handler || NoHandler;
-		const middleware = this["~getMiddleware"](event, route);
-		return middleware.length > 0 ? callMiddleware(event, middleware, routeHandler) : routeHandler(event);
-	}
-	"~request"(request, context) {
-		const event = new H3Event(request, context, this);
-		let handlerRes;
-		try {
-			if (this.config.onRequest) {
-				const hookRes = this.config.onRequest(event);
-				handlerRes = typeof hookRes?.then === "function" ? hookRes.then(() => this.handler(event)) : this.handler(event);
-			} else handlerRes = this.handler(event);
-		} catch (error) {
-			handlerRes = Promise.reject(error);
-		}
-		return toResponse(handlerRes, event, this.config);
-	}
-	"~findRoute"(_event) {}
-	"~addRoute"(_route) {
-		this["~routes"].push(_route);
-	}
-	"~getMiddleware"(_event, route) {
-		const routeMiddleware = route?.data.middleware;
-		const globalMiddleware = this["~middleware"];
-		return routeMiddleware ? [...globalMiddleware, ...routeMiddleware] : globalMiddleware;
-	}
-};
 //#endregion
-export { NodeResponse as a, toRequest as i, HTTPError as n, NullProtoObj as o, defineLazyEventHandler as r, H3Core as t };
+export { toResponse as n, H3Event as t };

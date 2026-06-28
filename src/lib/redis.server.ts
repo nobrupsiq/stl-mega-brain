@@ -1,42 +1,47 @@
-// ⚠️ SOMENTE SERVIDOR. Cliente mínimo do Upstash Redis via REST (fetch).
-// Variáveis de ambiente (a integração Upstash da Vercel injeta uma destas):
-//   UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
-//   (fallback) KV_REST_API_URL / KV_REST_API_TOKEN
+// ⚠️ SOMENTE SERVIDOR. Cliente Redis (protocolo padrão via connection string).
+// Funciona com Redis Cloud e Upstash — ambos injetam uma URL `redis://...`.
+//
+// Variável de ambiente (a integração Redis da Vercel injeta automaticamente):
+//   REDIS_URL  (aceita também REDIS_URI / KV_URL / REDIS_TLS_URL como fallback)
 
-function getConfig() {
-  const url =
-    process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? "";
-  const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? "";
-  return { url, token };
+import { Redis } from "ioredis";
+
+function getUrl(): string {
+  const direct =
+    process.env.REDIS_URL ??
+    process.env.REDIS_URI ??
+    process.env.REDIS_TLS_URL ??
+    process.env.KV_URL;
+  if (direct) return direct;
+  // Fallback: acha qualquer env var que pareça uma connection string Redis
+  // (caso a integração tenha injetado com outro nome).
+  for (const value of Object.values(process.env)) {
+    if (typeof value === "string" && /^rediss?:\/\//.test(value)) return value;
+  }
+  return "";
 }
 
 export function isRedisConfigured(): boolean {
-  const { url, token } = getConfig();
-  return Boolean(url && token);
+  return Boolean(getUrl());
 }
 
-async function command<T = unknown>(args: (string | number)[]): Promise<T> {
-  const { url, token } = getConfig();
-  if (!url || !token) {
-    throw new Error(
-      "Upstash não configurado: defina UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN.",
-    );
+let client: Redis | null = null;
+
+function getClient(): Redis {
+  const url = getUrl();
+  if (!url) {
+    throw new Error("Redis não configurado: defina REDIS_URL.");
   }
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(args),
-  });
-  if (!res.ok) {
-    throw new Error(`Upstash erro ${res.status}: ${await res.text()}`);
+  if (!client) {
+    client = new Redis(url, {
+      // Conecta sob demanda (não no load do módulo) e não trava a requisição.
+      lazyConnect: true,
+      maxRetriesPerRequest: 2,
+      connectTimeout: 10000,
+    });
+    client.on("error", (err) => console.error("[redis]", err));
   }
-  const data = (await res.json()) as { result: T; error?: string };
-  if (data.error) throw new Error(`Upstash: ${data.error}`);
-  return data.result;
+  return client;
 }
 
 const PAID_KEY = "paid_emails";
@@ -46,14 +51,14 @@ function normalize(email: string): string {
 }
 
 export async function addPaidEmail(email: string): Promise<void> {
-  await command(["SADD", PAID_KEY, normalize(email)]);
+  await getClient().sadd(PAID_KEY, normalize(email));
 }
 
 export async function removePaidEmail(email: string): Promise<void> {
-  await command(["SREM", PAID_KEY, normalize(email)]);
+  await getClient().srem(PAID_KEY, normalize(email));
 }
 
 export async function isPaidEmail(email: string): Promise<boolean> {
-  const result = await command<number>(["SISMEMBER", PAID_KEY, normalize(email)]);
+  const result = await getClient().sismember(PAID_KEY, normalize(email));
   return result === 1;
 }
