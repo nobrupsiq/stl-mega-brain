@@ -25,7 +25,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 
-const CHECKOUT_URL = "https://ggcheckout.app/"; // TODO: substitua pelo seu link de checkout
+const CHECKOUT_URL = "https://ggcheckout.app/checkout/v5/w5AmtKVDFAKCy1ORvDta";
 
 const features = [
   { icon: Boxes, title: "+90 mil arquivos STL", desc: "Catálogo gigante separado por nicho, pronto para imprimir." },

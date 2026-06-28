@@ -5,7 +5,7 @@ import { t as Button } from "./button-DRsC1qZi.mjs";
 import { C as CreditCard, D as Boxes, E as Check, O as BookOpen, S as Download, a as Trophy, c as Star, g as Lock, k as BadgeCheck, l as Sparkles, n as X, o as TrendingUp, p as Quote, s as ThumbsUp, t as Zap, u as ShieldCheck, v as Gift, y as Flame } from "../_libs/lucide-react.mjs";
 import { n as gsapWithCSS, t as ScrollTrigger } from "../_libs/gsap.mjs";
 import { a as Color, c as Mesh, d as PointsMaterial, f as Scene, i as Clock, l as PerspectiveCamera, n as BufferAttribute, o as IcosahedronGeometry, p as ShaderMaterial, r as BufferGeometry, s as MathUtils, t as WebGLRenderer, u as Points } from "../_libs/three.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-CHAVmUBe.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-ClJ1EXtD.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var VERTEX = `
@@ -238,7 +238,7 @@ function ThreeScene() {
 		"aria-hidden": "true"
 	});
 }
-var CHECKOUT_URL = "https://ggcheckout.app/";
+var CHECKOUT_URL = "https://ggcheckout.app/checkout/v5/w5AmtKVDFAKCy1ORvDta";
 var features = [
 	{
 		icon: Boxes,

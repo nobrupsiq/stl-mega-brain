@@ -6,7 +6,7 @@ import { t as Route$3 } from "../_moduleId-dFvsBZed.mjs";
 import { t as Route$4 } from "./membros-DWxcuYL0.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-BMD52qhR.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-DrxuRGmt.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-BA5OCfi3.css";
@@ -189,7 +189,7 @@ var Route$1 = createFileRoute("/acesso")({
 	] }),
 	component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-var $$splitComponentImporter = () => import("./routes-CHAVmUBe.mjs");
+var $$splitComponentImporter = () => import("./routes-ClJ1EXtD.mjs");
 var Route = createFileRoute("/")({
 	head: () => ({ meta: [
 		{ title: "Pack STL Definitivo · +90 mil arquivos para impressão 3D por R$29,90" },
