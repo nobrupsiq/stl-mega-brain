@@ -1,14 +1,116 @@
 import "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
+import { A as isNotFound, C as getStylesheetHref, D as isRedirect, E as executeRewriteInput, M as invariant, O as isResolvedRedirect, S as getScriptPreloadAttrs, T as resolveManifestCssLink, a as replaceSsrResponse, i as normalizeSsrResponse, k as rootRouteId, l as RouterProvider, n as defineHandlerCallback, o as stripSsrResponseBody, r as isSsrResponse, t as renderRouterToStream, w as resolveManifestAssetLink } from "../_libs/@tanstack/react-router+[...].mjs";
+import { n as createMemoryHistory } from "../_libs/tanstack__history.mjs";
+import { a as defaultSerovalPlugins, c as makeSerovalPlugin, d as su, i as getOrigin, l as Pu, n as attachRouterServerSsrUtils, o as createRawStreamRPCPlugin, r as getNormalizedURL, s as createSerializationAdapter, t as mergeHeaders, u as iu } from "../_libs/@tanstack/router-core+[...].mjs";
 import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
-import { a as RouterProvider, n as defineHandlerCallback, t as renderRouterToStream } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as createMemoryHistory } from "../_libs/tanstack__history.mjs";
 import { t as createMiddleware } from "./createStart-Dt05N14y.mjs";
-import { C as isNotFound, S as rootRouteId, T as mergeHeaders, _ as resolveManifestAssetLink, a as attachRouterServerSsrUtils, b as isRedirect, c as defaultSerovalPlugins, d as makeSerovalPlugin, f as Pu, g as getStylesheetHref, h as getScriptPreloadAttrs, i as stripSsrResponseBody, l as createRawStreamRPCPlugin, m as su, n as normalizeSsrResponse, o as getNormalizedURL, p as iu, r as replaceSsrResponse, s as getOrigin, t as isSsrResponse, u as createSerializationAdapter, v as resolveManifestCssLink, w as invariant, x as isResolvedRedirect, y as executeRewriteInput } from "../_libs/@tanstack/router-core+[...].mjs";
 import { n as toResponse, t as H3Event } from "../_libs/h3-v2.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 require_react();
 var import_jsx_runtime = require_jsx_runtime();
+function StartServer(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouterProvider, { router: props.router });
+}
+var defaultStreamHandler = defineHandlerCallback(({ request, router, responseHeaders }) => renderRouterToStream({
+	request,
+	router,
+	responseHeaders,
+	children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StartServer, { router })
+}));
+var GLOBAL_EVENT_STORAGE_KEY = Symbol.for("tanstack-start:event-storage");
+var globalObj$1 = globalThis;
+if (!globalObj$1[GLOBAL_EVENT_STORAGE_KEY]) globalObj$1[GLOBAL_EVENT_STORAGE_KEY] = new AsyncLocalStorage();
+var eventStorage = globalObj$1[GLOBAL_EVENT_STORAGE_KEY];
+function isPromiseLike(value) {
+	return typeof value.then === "function";
+}
+function getSetCookieValues(headers) {
+	const headersWithSetCookie = headers;
+	if (typeof headersWithSetCookie.getSetCookie === "function") return headersWithSetCookie.getSetCookie();
+	const value = headers.get("set-cookie");
+	return value ? [value] : [];
+}
+function mergeEventResponseHeaders(response, event) {
+	if (response.ok) return;
+	const eventSetCookies = getSetCookieValues(event.res.headers);
+	if (eventSetCookies.length === 0) return;
+	const responseSetCookies = getSetCookieValues(response.headers);
+	response.headers.delete("set-cookie");
+	for (const cookie of responseSetCookies) response.headers.append("set-cookie", cookie);
+	for (const cookie of eventSetCookies) response.headers.append("set-cookie", cookie);
+}
+function attachResponseHeaders(value, event) {
+	if (isPromiseLike(value)) return value.then((resolved) => {
+		if (resolved instanceof Response) mergeEventResponseHeaders(resolved, event);
+		return resolved;
+	});
+	if (value instanceof Response) mergeEventResponseHeaders(value, event);
+	return value;
+}
+function requestHandler(handler) {
+	return (request, requestOpts) => {
+		let h3Event;
+		try {
+			h3Event = new H3Event(request);
+		} catch (error) {
+			if (error instanceof URIError) return new Response(null, {
+				status: 400,
+				statusText: "Bad Request"
+			});
+			throw error;
+		}
+		return toResponse(attachResponseHeaders(eventStorage.run({ h3Event }, () => handler(request, requestOpts)), h3Event), h3Event);
+	};
+}
+function getH3Event() {
+	const event = eventStorage.getStore();
+	if (!event) throw new Error(`No StartEvent found in AsyncLocalStorage. Make sure you are using the function within the server runtime.`);
+	return event.h3Event;
+}
+function getResponse() {
+	return getH3Event().res;
+}
+var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
+/**
+* @description Returns the router manifest data that should be sent to the client.
+* This includes only the assets and preloads for the current route and any
+* special assets that are needed for the client. It does not include relationships
+* between routes or any other data that is not needed for the client.
+*
+* @param matchedRoutes - In dev mode, the matched routes are used to build
+* the dev styles URL for route-scoped CSS collection.
+*/
+async function getStartManifest(matchedRoutes) {
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-DSeiqEyu.mjs");
+	const startManifest = tsrStartManifest();
+	let routes = startManifest.routes;
+	routes[rootRouteId];
+	const manifestRoutes = {};
+	for (const k in routes) {
+		const v = routes[k];
+		const result = {};
+		if (v.preloads && v.preloads.length > 0) result.preloads = v.preloads;
+		if (v.scripts && v.scripts.length > 0) result.scripts = v.scripts;
+		if (v.css?.length) result.css = v.css;
+		if (result.preloads || result.scripts || result.css) manifestRoutes[k] = result;
+	}
+	return {
+		...startManifest.scriptFormat ? { scriptFormat: startManifest.scriptFormat } : {},
+		...startManifest.inlineCss ? { inlineCss: startManifest.inlineCss } : {},
+		routes: manifestRoutes
+	};
+}
+var manifest = {};
+async function getServerFnById(id, access) {
+	const serverFnInfo = manifest[id];
+	if (!serverFnInfo) throw new Error("Server function info not found for " + id);
+	const fnModule = serverFnInfo.module ?? await serverFnInfo.importer();
+	if (!fnModule) throw new Error("Server function module not resolved for " + id);
+	const action = fnModule[serverFnInfo.functionName];
+	if (!action) throw new Error("Server function module export not resolved for serverFn ID: " + id);
+	return action;
+}
 var TSS_FORMDATA_CONTEXT = "__TSS_CONTEXT";
 var TSS_SERVER_FUNCTION = Symbol.for("TSS_SERVER_FUNCTION");
 var X_TSS_SERIALIZED = "x-tss-serialized";
@@ -56,9 +158,9 @@ function createNullProtoObject(source) {
 	return obj;
 }
 var GLOBAL_STORAGE_KEY = Symbol.for("tanstack-start:start-storage-context");
-var globalObj$1 = globalThis;
-if (!globalObj$1[GLOBAL_STORAGE_KEY]) globalObj$1[GLOBAL_STORAGE_KEY] = new AsyncLocalStorage();
-var startStorage = globalObj$1[GLOBAL_STORAGE_KEY];
+var globalObj = globalThis;
+if (!globalObj[GLOBAL_STORAGE_KEY]) globalObj[GLOBAL_STORAGE_KEY] = new AsyncLocalStorage();
+var startStorage = globalObj[GLOBAL_STORAGE_KEY];
 async function runWithStartContext(context, fn) {
 	return startStorage.run(context, fn);
 }
@@ -139,108 +241,6 @@ async function getFailureResponse(opts, ctx) {
 }
 function getDefaultSerovalPlugins() {
 	return [...(getStartOptions()?.serializationAdapters)?.map(makeSerovalPlugin) ?? [], ...defaultSerovalPlugins];
-}
-function StartServer(props) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouterProvider, { router: props.router });
-}
-var defaultStreamHandler = defineHandlerCallback(({ request, router, responseHeaders }) => renderRouterToStream({
-	request,
-	router,
-	responseHeaders,
-	children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StartServer, { router })
-}));
-var GLOBAL_EVENT_STORAGE_KEY = Symbol.for("tanstack-start:event-storage");
-var globalObj = globalThis;
-if (!globalObj[GLOBAL_EVENT_STORAGE_KEY]) globalObj[GLOBAL_EVENT_STORAGE_KEY] = new AsyncLocalStorage();
-var eventStorage = globalObj[GLOBAL_EVENT_STORAGE_KEY];
-function isPromiseLike(value) {
-	return typeof value.then === "function";
-}
-function getSetCookieValues(headers) {
-	const headersWithSetCookie = headers;
-	if (typeof headersWithSetCookie.getSetCookie === "function") return headersWithSetCookie.getSetCookie();
-	const value = headers.get("set-cookie");
-	return value ? [value] : [];
-}
-function mergeEventResponseHeaders(response, event) {
-	if (response.ok) return;
-	const eventSetCookies = getSetCookieValues(event.res.headers);
-	if (eventSetCookies.length === 0) return;
-	const responseSetCookies = getSetCookieValues(response.headers);
-	response.headers.delete("set-cookie");
-	for (const cookie of responseSetCookies) response.headers.append("set-cookie", cookie);
-	for (const cookie of eventSetCookies) response.headers.append("set-cookie", cookie);
-}
-function attachResponseHeaders(value, event) {
-	if (isPromiseLike(value)) return value.then((resolved) => {
-		if (resolved instanceof Response) mergeEventResponseHeaders(resolved, event);
-		return resolved;
-	});
-	if (value instanceof Response) mergeEventResponseHeaders(value, event);
-	return value;
-}
-function requestHandler(handler) {
-	return (request, requestOpts) => {
-		let h3Event;
-		try {
-			h3Event = new H3Event(request);
-		} catch (error) {
-			if (error instanceof URIError) return new Response(null, {
-				status: 400,
-				statusText: "Bad Request"
-			});
-			throw error;
-		}
-		return toResponse(attachResponseHeaders(eventStorage.run({ h3Event }, () => handler(request, requestOpts)), h3Event), h3Event);
-	};
-}
-function getH3Event() {
-	const event = eventStorage.getStore();
-	if (!event) throw new Error(`No StartEvent found in AsyncLocalStorage. Make sure you are using the function within the server runtime.`);
-	return event.h3Event;
-}
-function getResponse() {
-	return getH3Event().res;
-}
-var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
-/**
-* @description Returns the router manifest data that should be sent to the client.
-* This includes only the assets and preloads for the current route and any
-* special assets that are needed for the client. It does not include relationships
-* between routes or any other data that is not needed for the client.
-*
-* @param matchedRoutes - In dev mode, the matched routes are used to build
-* the dev styles URL for route-scoped CSS collection.
-*/
-async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-DE1vvlGR.mjs");
-	const startManifest = tsrStartManifest();
-	let routes = startManifest.routes;
-	routes[rootRouteId];
-	const manifestRoutes = {};
-	for (const k in routes) {
-		const v = routes[k];
-		const result = {};
-		if (v.preloads && v.preloads.length > 0) result.preloads = v.preloads;
-		if (v.scripts && v.scripts.length > 0) result.scripts = v.scripts;
-		if (v.css?.length) result.css = v.css;
-		if (result.preloads || result.scripts || result.css) manifestRoutes[k] = result;
-	}
-	return {
-		...startManifest.scriptFormat ? { scriptFormat: startManifest.scriptFormat } : {},
-		...startManifest.inlineCss ? { inlineCss: startManifest.inlineCss } : {},
-		routes: manifestRoutes
-	};
-}
-var manifest = {};
-async function getServerFnById(id, access) {
-	const serverFnInfo = manifest[id];
-	if (!serverFnInfo) throw new Error("Server function info not found for " + id);
-	const fnModule = serverFnInfo.module ?? await serverFnInfo.importer();
-	if (!fnModule) throw new Error("Server function module not resolved for " + id);
-	const action = fnModule[serverFnInfo.functionName];
-	if (!action) throw new Error("Server function module export not resolved for serverFn ID: " + id);
-	return action;
 }
 /**
 * Binary frame protocol for multiplexing JSON and raw streams over HTTP.
@@ -1163,7 +1163,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-CkMOYzJO.mjs"),
+		import("./router-B0nqY6MM.mjs"),
 		import("./start-Ok9K6Nid.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);
