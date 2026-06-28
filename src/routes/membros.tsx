@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MembersHeader } from "@/components/MembersHeader";
 import { getAccessEmail } from "@/lib/auth";
-import { MODULES, STATUS_BADGE, type Module } from "@/lib/modules";
+import { STATUS_BADGE, type PublicModule } from "@/lib/modules-types";
+import { getPublicModulesFn } from "@/lib/modules-data";
 
 export const Route = createFileRoute("/membros")({
   head: () => ({
@@ -14,18 +15,19 @@ export const Route = createFileRoute("/membros")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  loader: () => getPublicModulesFn(),
   component: MembersPage,
 });
 
 function MembersPage() {
   const navigate = useNavigate();
+  const modules = Route.useLoaderData();
   const [email, setEmail] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Porta de acesso: sem sessão válida volta para a tela de login.
-  // TODO: validação real do e-mail entra aqui.
+  // O acesso já é garantido pelo servidor (gate em src/server.ts). Aqui só lemos
+  // o e-mail pra exibir; se faltar (navegação client-side), voltamos pro login.
   useEffect(() => {
     const stored = getAccessEmail();
     if (!stored) {
@@ -33,26 +35,26 @@ function MembersPage() {
       return;
     }
     setEmail(stored);
-    setChecked(true);
   }, [navigate]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return MODULES;
-    return MODULES.filter(
+    if (!q) return modules;
+    return modules.filter(
       (m) =>
         m.title.toLowerCase().includes(q) ||
         m.subtitle.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, modules]);
 
   function handleRefresh() {
-    // TODO: re-buscar acessos liberados do backend.
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+    navigate({ to: "/membros" }).finally(() => {
+      setTimeout(() => setRefreshing(false), 600);
+    });
   }
 
-  if (!checked || !email) {
+  if (!email) {
     return <div className="min-h-screen bg-background" />;
   }
 
@@ -107,7 +109,7 @@ function MembersPage() {
   );
 }
 
-function ModuleCard({ module: m }: { module: Module }) {
+function ModuleCard({ module: m }: { module: PublicModule }) {
   const badge = m.status === "ok" ? null : STATUS_BADGE[m.status];
 
   return (

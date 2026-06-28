@@ -1,19 +1,33 @@
 import { r as __toESM } from "../_runtime.mjs";
-import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { g as useNavigate, h as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { t as Button } from "./button-DRsC1qZi.mjs";
-import { n as getAccessEmail } from "./auth-B45Auu7R.mjs";
 import { A as ArrowRight, E as Check, d as Search, f as RefreshCw, r as Wrench } from "../_libs/lucide-react.mjs";
-import { n as MembersHeader, r as STATUS_BADGE, t as MODULES } from "./modules-D2WMvFY9.mjs";
+import { n as getAccessEmail, t as MembersHeader } from "./auth-D8kQEmHf.mjs";
 import { t as Input } from "./input-DicJzR9-.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/membros-IL9PUEPk.js
+import { t as Route } from "./membros-DWxcuYL0.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/membros-BK9Qlmmw.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
+var STATUS_BADGE = {
+	andamento: {
+		label: "EM ANDAMENTO",
+		className: "bg-accent text-accent-foreground"
+	},
+	manutencao_parcial: {
+		label: "MANUTENÇÃO PARCIAL",
+		className: "bg-secondary text-secondary-foreground"
+	},
+	manutencao: {
+		label: "EM MANUTENÇÃO",
+		className: "bg-secondary text-secondary-foreground"
+	}
+};
 function MembersPage() {
 	const navigate = useNavigate();
+	const modules = Route.useLoaderData();
 	const [email, setEmail] = (0, import_react.useState)(null);
-	const [checked, setChecked] = (0, import_react.useState)(false);
 	const [query, setQuery] = (0, import_react.useState)("");
 	const [refreshing, setRefreshing] = (0, import_react.useState)(false);
 	(0, import_react.useEffect)(() => {
@@ -23,18 +37,19 @@ function MembersPage() {
 			return;
 		}
 		setEmail(stored);
-		setChecked(true);
 	}, [navigate]);
 	const filtered = (0, import_react.useMemo)(() => {
 		const q = query.trim().toLowerCase();
-		if (!q) return MODULES;
-		return MODULES.filter((m) => m.title.toLowerCase().includes(q) || m.subtitle.toLowerCase().includes(q));
-	}, [query]);
+		if (!q) return modules;
+		return modules.filter((m) => m.title.toLowerCase().includes(q) || m.subtitle.toLowerCase().includes(q));
+	}, [query, modules]);
 	function handleRefresh() {
 		setRefreshing(true);
-		setTimeout(() => setRefreshing(false), 800);
+		navigate({ to: "/membros" }).finally(() => {
+			setTimeout(() => setRefreshing(false), 600);
+		});
 	}
-	if (!checked || !email) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen bg-background" });
+	if (!email) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen bg-background" });
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "min-h-screen bg-background",
 		children: [

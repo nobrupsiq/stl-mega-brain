@@ -1,11 +1,12 @@
 import { r as __toESM } from "../_runtime.mjs";
-import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { _ as useRouter, c as HeadContent, d as Outlet, f as lazyRouteComponent, h as Link, m as createRootRouteWithContext, p as createFileRoute, s as Scripts, u as createRouter } from "../_libs/@tanstack/react-router+[...].mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
-import { t as Route$4 } from "../_moduleId-D5AfRWNk.mjs";
+import { t as Route$3 } from "../_moduleId-dFvsBZed.mjs";
+import { t as Route$4 } from "./membros-DWxcuYL0.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-B0nqY6MM.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-BMD52qhR.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-BA5OCfi3.css";
@@ -89,7 +90,7 @@ function ErrorComponent({ error, reset }) {
 		})
 	});
 }
-var Route$3 = createRootRouteWithContext()({
+var Route$2 = createRootRouteWithContext()({
 	head: () => ({
 		meta: [
 			{ charSet: "utf-8" },
@@ -167,21 +168,13 @@ function RootShell({ children }) {
 	});
 }
 function RootComponent() {
-	const { queryClient } = Route$3.useRouteContext();
+	const { queryClient } = Route$2.useRouteContext();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(QueryClientProvider, {
 		client: queryClient,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {})
 	});
 }
-var $$splitComponentImporter$2 = () => import("./membros-IL9PUEPk.mjs");
-var Route$2 = createFileRoute("/membros")({
-	head: () => ({ meta: [{ title: "Área de Membros · STL Mega Brain" }, {
-		name: "robots",
-		content: "noindex, nofollow"
-	}] }),
-	component: lazyRouteComponent($$splitComponentImporter$2, "component")
-});
-var $$splitComponentImporter$1 = () => import("./acesso-O43X4rfZ.mjs");
+var $$splitComponentImporter$1 = () => import("./acesso-B9ogdYjS.mjs");
 var Route$1 = createFileRoute("/acesso")({
 	head: () => ({ meta: [
 		{ title: "Acesso à Área de Membros · STL Mega Brain" },
@@ -215,31 +208,31 @@ var Route = createFileRoute("/")({
 	] }),
 	component: lazyRouteComponent($$splitComponentImporter, "component")
 });
-var MembrosRoute = Route$2.update({
+var MembrosRoute = Route$4.update({
 	id: "/membros",
 	path: "/membros",
-	getParentRoute: () => Route$3
+	getParentRoute: () => Route$2
 });
 var AcessoRoute = Route$1.update({
 	id: "/acesso",
 	path: "/acesso",
-	getParentRoute: () => Route$3
+	getParentRoute: () => Route$2
 });
 var rootRouteChildren = {
 	IndexRoute: Route.update({
 		id: "/",
 		path: "/",
-		getParentRoute: () => Route$3
+		getParentRoute: () => Route$2
 	}),
 	AcessoRoute,
 	MembrosRoute,
-	ModuloModuleIdRoute: Route$4.update({
+	ModuloModuleIdRoute: Route$3.update({
 		id: "/modulo/$moduleId",
 		path: "/modulo/$moduleId",
-		getParentRoute: () => Route$3
+		getParentRoute: () => Route$2
 	})
 };
-var routeTree = Route$3._addFileChildren(rootRouteChildren)._addFileTypes();
+var routeTree = Route$2._addFileChildren(rootRouteChildren)._addFileTypes();
 var getRouter = () => {
 	return createRouter({
 		routeTree,

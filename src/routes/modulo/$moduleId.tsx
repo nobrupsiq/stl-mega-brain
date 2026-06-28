@@ -4,7 +4,8 @@ import { ArrowLeft, Download, ExternalLink, FileText, Upload, Wrench } from "luc
 import { Button } from "@/components/ui/button";
 import { MembersHeader } from "@/components/MembersHeader";
 import { getAccessEmail } from "@/lib/auth";
-import { getModule, type Category } from "@/lib/modules";
+import type { PublicCategory, PublicModule } from "@/lib/modules-types";
+import { getPublicModulesFn } from "@/lib/modules-data";
 
 export const Route = createFileRoute("/modulo/$moduleId")({
   head: () => ({
@@ -13,16 +14,16 @@ export const Route = createFileRoute("/modulo/$moduleId")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  loader: () => getPublicModulesFn(),
   component: ModulePage,
 });
 
 function ModulePage() {
   const navigate = useNavigate();
   const { moduleId } = Route.useParams();
+  const modules = Route.useLoaderData();
   const [email, setEmail] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
 
-  // Porta de acesso: sem sessão válida volta para a tela de login.
   useEffect(() => {
     const stored = getAccessEmail();
     if (!stored) {
@@ -30,14 +31,13 @@ function ModulePage() {
       return;
     }
     setEmail(stored);
-    setChecked(true);
   }, [navigate]);
 
-  if (!checked || !email) {
+  if (!email) {
     return <div className="min-h-screen bg-background" />;
   }
 
-  const module = getModule(moduleId);
+  const module = modules.find((m) => m.id === moduleId);
 
   if (!module) {
     return (
@@ -115,8 +115,13 @@ function ModulePage() {
             {/* Categorias */}
             <h2 className="mt-10 text-xl font-bold">Categorias Disponíveis</h2>
             <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {module.categories.map((category) => (
-                <CategoryCard key={category.name} category={category} />
+              {module.categories.map((category, index) => (
+                <CategoryCard
+                  key={category.name}
+                  category={category}
+                  moduleId={module.id}
+                  index={index}
+                />
               ))}
             </div>
           </>
@@ -180,7 +185,15 @@ function PdfGuide({ title, pdf }: { title: string; pdf: string }) {
   );
 }
 
-function CategoryCard({ category }: { category: Category }) {
+function CategoryCard({
+  category,
+  moduleId,
+  index,
+}: {
+  category: PublicCategory;
+  moduleId: string;
+  index: number;
+}) {
   return (
     <div className="flex flex-col rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-3">
@@ -193,7 +206,7 @@ function CategoryCard({ category }: { category: Category }) {
       </div>
 
       <div className="mt-5 space-y-3">
-        {category.maintenance ? (
+        {category.maintenance || !category.hasLink ? (
           <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-center">
             <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-foreground">
               <Wrench className="h-4 w-4" />
@@ -204,19 +217,17 @@ function CategoryCard({ category }: { category: Category }) {
             </p>
           </div>
         ) : (
-          category.links.map((link, i) => (
-            <Button
-              key={link.label}
-              asChild
-              variant={i === 0 ? "default" : "outline"}
-              className="w-full"
+          <Button asChild className="w-full">
+            {/* O link real do Drive é resolvido no servidor (/api/go) só p/ quem tem sessão. */}
+            <a
+              href={`/api/go?m=${encodeURIComponent(moduleId)}&c=${index}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a href={link.href} target="_blank" rel="noopener noreferrer">
-                {link.label}
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          ))
+              Acessar
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
         )}
       </div>
     </div>

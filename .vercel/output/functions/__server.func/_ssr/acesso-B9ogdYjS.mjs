@@ -1,14 +1,13 @@
 import { r as __toESM } from "../_runtime.mjs";
-import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { g as useNavigate } from "../_libs/@tanstack/react-router+[...].mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { n as cn, t as Button } from "./button-DRsC1qZi.mjs";
-import { r as setAccessEmail } from "./auth-B45Auu7R.mjs";
 import { D as Boxes, _ as LoaderCircle, g as Lock, m as Mail } from "../_libs/lucide-react.mjs";
 import { t as Input } from "./input-DicJzR9-.mjs";
 import { t as Root } from "../_libs/radix-ui__react-label.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/acesso-O43X4rfZ.js
+//#region node_modules/.nitro/vite/services/ssr/assets/acesso-B9ogdYjS.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var labelVariants = cva("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
@@ -33,9 +32,16 @@ function AccessPage() {
 		}
 		setLoading(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			setAccessEmail(value);
-			navigate({ to: "/membros" });
+			const res = await fetch("/api/login", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ email: value })
+			});
+			const data = await res.json().catch(() => ({}));
+			if (res.ok && data.ok) navigate({ to: "/membros" });
+			else setError(data.error ?? "Não foi possível entrar. Tente novamente.");
+		} catch {
+			setError("Erro de conexão. Tente novamente.");
 		} finally {
 			setLoading(false);
 		}

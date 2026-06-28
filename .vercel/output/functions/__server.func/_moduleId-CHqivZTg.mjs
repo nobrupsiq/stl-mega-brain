@@ -1,20 +1,19 @@
 import { r as __toESM } from "./_runtime.mjs";
-import { u as require_react } from "./_libs/@floating-ui/react-dom+[...].mjs";
 import { g as useNavigate, h as Link } from "./_libs/@tanstack/react-router+[...].mjs";
+import { u as require_react } from "./_libs/@floating-ui/react-dom+[...].mjs";
 import { c as require_jsx_runtime } from "./_libs/@radix-ui/react-arrow+[...].mjs";
-import { t as Route } from "./_moduleId-D5AfRWNk.mjs";
+import { t as Route } from "./_moduleId-dFvsBZed.mjs";
 import { t as Button } from "./_ssr/button-DRsC1qZi.mjs";
-import { n as getAccessEmail } from "./_ssr/auth-B45Auu7R.mjs";
 import { S as Download, b as FileText, i as Upload, j as ArrowLeft, r as Wrench, x as ExternalLink } from "./_libs/lucide-react.mjs";
-import { i as getModule, n as MembersHeader } from "./_ssr/modules-D2WMvFY9.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/_moduleId-CsLTgrt5.js
+import { n as getAccessEmail, t as MembersHeader } from "./_ssr/auth-D8kQEmHf.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/_moduleId-CHqivZTg.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function ModulePage() {
 	const navigate = useNavigate();
 	const { moduleId } = Route.useParams();
+	const modules = Route.useLoaderData();
 	const [email, setEmail] = (0, import_react.useState)(null);
-	const [checked, setChecked] = (0, import_react.useState)(false);
 	(0, import_react.useEffect)(() => {
 		const stored = getAccessEmail();
 		if (!stored) {
@@ -22,10 +21,9 @@ function ModulePage() {
 			return;
 		}
 		setEmail(stored);
-		setChecked(true);
 	}, [navigate]);
-	if (!checked || !email) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen bg-background" });
-	const module = getModule(moduleId);
+	if (!email) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen bg-background" });
+	const module = modules.find((m) => m.id === moduleId);
 	if (!module) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "min-h-screen bg-background",
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MembersHeader, { email }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -97,7 +95,11 @@ function ModulePage() {
 					children: "Categorias Disponíveis"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3",
-					children: module.categories.map((category) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CategoryCard, { category }, category.name))
+					children: module.categories.map((category, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CategoryCard, {
+						category,
+						moduleId: module.id,
+						index
+					}, category.name))
 				})] })
 			]
 		})]
@@ -168,7 +170,7 @@ function PdfGuide({ title, pdf }) {
 		]
 	});
 }
-function CategoryCard({ category }) {
+function CategoryCard({ category, moduleId, index }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "flex flex-col rounded-xl border border-border bg-card p-5",
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -182,7 +184,7 @@ function CategoryCard({ category }) {
 			})]
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			className: "mt-5 space-y-3",
-			children: category.maintenance ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			children: category.maintenance || !category.hasLink ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "rounded-md border border-border bg-secondary/40 px-4 py-3 text-center",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					className: "flex items-center justify-center gap-1.5 text-sm font-medium text-foreground",
@@ -191,17 +193,16 @@ function CategoryCard({ category }) {
 					className: "mt-0.5 text-xs text-muted-foreground",
 					children: "Link sendo atualizado no Drive"
 				})]
-			}) : category.links.map((link, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 				asChild: true,
-				variant: i === 0 ? "default" : "outline",
 				className: "w-full",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-					href: link.href,
+					href: `/api/go?m=${encodeURIComponent(moduleId)}&c=${index}`,
 					target: "_blank",
 					rel: "noopener noreferrer",
-					children: [link.label, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "h-4 w-4" })]
+					children: ["Acessar", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "h-4 w-4" })]
 				})
-			}, link.label))
+			})
 		})]
 	});
 }

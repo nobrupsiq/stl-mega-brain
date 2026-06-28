@@ -1,4 +1,4 @@
-//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-DSeiqEyu.js
+//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-Dyrtyfci.js
 var tsrStartManifest = () => ({ routes: {
 	__root__: {
 		filePath: "C:/Users/Bruno/Desktop/stl-mega-brain/src/routes/__root.tsx",
@@ -9,14 +9,14 @@ var tsrStartManifest = () => ({ routes: {
 			"/modulo/$moduleId"
 		],
 		preloads: [
-			"/assets/index-Db-n6M1g.js",
+			"/assets/index-DkN5wrkd.js",
 			"/assets/jsx-runtime-bzQ4Vb5N.js",
 			"/assets/useNavigate-CS6jAhOm.js"
 		],
 		scripts: [{ attrs: {
 			type: "module",
 			async: !0,
-			src: "/assets/index-Db-n6M1g.js"
+			src: "/assets/index-DkN5wrkd.js"
 		} }]
 	},
 	"/": {
@@ -34,9 +34,9 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Bruno/Desktop/stl-mega-brain/src/routes/acesso.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/acesso-DTk0ZIGA.js",
+			"/assets/acesso-D7nWZQKj.js",
 			"/assets/button-By4sEAsT.js",
-			"/assets/auth-DL-eJPdM.js",
+			"/assets/dist-DYTUj-vo.js",
 			"/assets/lock-BlFI7VEh.js",
 			"/assets/input-C4yNHoVI.js"
 		]
@@ -45,10 +45,9 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Bruno/Desktop/stl-mega-brain/src/routes/membros.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/membros-DePSE-gP.js",
-			"/assets/modules-Bdn1n0qn.js",
+			"/assets/membros-Bd7dY_wd.js",
+			"/assets/auth-lcSPyF68.js",
 			"/assets/button-By4sEAsT.js",
-			"/assets/auth-DL-eJPdM.js",
 			"/assets/check-1IRt4_9h.js",
 			"/assets/input-C4yNHoVI.js"
 		]
@@ -57,10 +56,9 @@ var tsrStartManifest = () => ({ routes: {
 		filePath: "C:/Users/Bruno/Desktop/stl-mega-brain/src/routes/modulo/$moduleId.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/_moduleId-Bf_EjQKE.js",
-			"/assets/modules-Bdn1n0qn.js",
+			"/assets/_moduleId-DYYVHuF_.js",
+			"/assets/auth-lcSPyF68.js",
 			"/assets/button-By4sEAsT.js",
-			"/assets/auth-DL-eJPdM.js",
 			"/assets/download-BB-CR23-.js"
 		]
 	}

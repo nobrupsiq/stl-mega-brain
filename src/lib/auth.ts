@@ -1,30 +1,17 @@
-// Sessão de acesso simples (client-side).
-// TODO: substituir por validação real do e-mail (lista liberada / backend).
-const STORAGE_KEY = "stl_access_email";
+// Helper de cliente: lê o e-mail logado do cookie (apenas para exibição).
+// A autenticação de verdade é o cookie de sessão assinado (HttpOnly), validado
+// no servidor — ver src/server.ts e src/lib/session.server.ts.
+const EMAIL_COOKIE = "stl_email";
 
 export function getAccessEmail(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.sessionStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
+  if (typeof document === "undefined") return null;
+  for (const part of document.cookie.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const key = part.slice(0, idx).trim();
+    if (key === EMAIL_COOKIE) {
+      return decodeURIComponent(part.slice(idx + 1).trim());
+    }
   }
-}
-
-export function setAccessEmail(email: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, email);
-  } catch {
-    /* ignora indisponibilidade de storage */
-  }
-}
-
-export function clearAccessEmail(): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignora indisponibilidade de storage */
-  }
+  return null;
 }

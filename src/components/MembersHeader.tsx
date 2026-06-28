@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Boxes, LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -8,15 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearAccessEmail } from "@/lib/auth";
 
 export function MembersHeader({ email }: { email: string }) {
-  const navigate = useNavigate();
   const initial = (email[0] ?? "U").toUpperCase();
 
   function handleLogout() {
-    clearAccessEmail();
-    navigate({ to: "/acesso" });
+    // Limpa os cookies no servidor e redireciona para /acesso.
+    window.location.href = "/api/logout";
   }
 
   return (

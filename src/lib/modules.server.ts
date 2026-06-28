@@ -1,7 +1,13 @@
-// Catálogo de módulos da área de membros.
-// TODO: trocar os href "#" pelos links reais de cada categoria.
+// ⚠️ SOMENTE SERVIDOR: este arquivo contém os links reais do Drive.
+// NUNCA importe-o de componentes/rotas do cliente — só de código de servidor
+// (src/server.ts e server functions). O cliente recebe apenas a projeção
+// pública (getPublicModules), sem URLs.
 
-export type ModuleStatus = "ok" | "andamento" | "manutencao_parcial" | "manutencao";
+import type {
+  ModuleStatus,
+  PublicCategory,
+  PublicModule,
+} from "./modules-types";
 
 export type CategoryLink = {
   label: string;
@@ -15,7 +21,7 @@ export type Category = {
   maintenance?: boolean;
 };
 
-export type Module = {
+type Module = {
   id: string;
   title: string;
   subtitle: string;
@@ -34,17 +40,6 @@ function link(name: string, href: string): Category {
 // Helper: categoria em manutenção (link sendo atualizado no Drive).
 function soon(name: string): Category {
   return { name, links: [], maintenance: true };
-}
-
-// Helper: gera categorias com Link 01 / Link 02 placeholders.
-function cat(name: string, links: number = 2): Category {
-  return {
-    name,
-    links: Array.from({ length: links }, (_, i) => ({
-      label: `Link ${String(i + 1).padStart(2, "0")}`,
-      href: "#",
-    })),
-  };
 }
 
 export const MODULES: Module[] = [
@@ -262,28 +257,41 @@ export const MODULES: Module[] = [
     subtitle: "Atualização contínua",
     image: "/modulo-bordado.webp",
     status: "manutencao",
-    categories: [cat("Bordado")],
+    categories: [soon("Bordado")],
   },
 ];
 
-export function getModule(id: string): Module | undefined {
+function getModule(id: string): Module | undefined {
   return MODULES.find((m) => m.id === id);
 }
 
-export const STATUS_BADGE: Record<
-  Exclude<ModuleStatus, "ok">,
-  { label: string; className: string }
-> = {
-  andamento: {
-    label: "EM ANDAMENTO",
-    className: "bg-accent text-accent-foreground",
-  },
-  manutencao_parcial: {
-    label: "MANUTENÇÃO PARCIAL",
-    className: "bg-secondary text-secondary-foreground",
-  },
-  manutencao: {
-    label: "EM MANUTENÇÃO",
-    className: "bg-secondary text-secondary-foreground",
-  },
-};
+// Projeção SEGURA pro cliente: metadados sem nenhum link do Drive.
+function toPublicCategory(c: Category): PublicCategory {
+  return {
+    name: c.name,
+    maintenance: c.maintenance === true,
+    hasLink: c.maintenance !== true && c.links.length > 0,
+  };
+}
+
+export function getPublicModules(): PublicModule[] {
+  return MODULES.map((m) => ({
+    id: m.id,
+    title: m.title,
+    subtitle: m.subtitle,
+    image: m.image,
+    status: m.status,
+    pdf: m.pdf,
+    categories: m.categories.map(toPublicCategory),
+  }));
+}
+
+// Resolve o link real de uma categoria (usado só por /api/go, após autenticação).
+export function getCategoryUrl(
+  moduleId: string,
+  categoryIndex: number,
+): string | null {
+  const category = getModule(moduleId)?.categories[categoryIndex];
+  if (!category || category.maintenance) return null;
+  return category.links[0]?.href ?? null;
+}

@@ -4,7 +4,6 @@ import { Boxes, Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setAccessEmail } from "@/lib/auth";
 
 export const Route = createFileRoute("/acesso")({
   head: () => ({
@@ -36,11 +35,22 @@ function AccessPage() {
 
     setLoading(true);
     try {
-      // TODO: validar o e-mail (lista liberada / backend) antes de liberar.
-      // Por enquanto qualquer e-mail válido entra na área de membros.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setAccessEmail(value);
-      navigate({ to: "/membros" });
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: value }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (res.ok && data.ok) {
+        navigate({ to: "/membros" });
+      } else {
+        setError(data.error ?? "Não foi possível entrar. Tente novamente.");
+      }
+    } catch {
+      setError("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);
     }
