@@ -77,14 +77,6 @@ export const MODULES: Module[] = [
     ],
   },
   {
-    id: "preview",
-    title: "Modelos com Pré-visualização",
-    subtitle: "Atualização contínua",
-    image: "/pacote-articulados.jpg",
-    status: "andamento",
-    categories: [cat("Modelos com pré-visualização")],
-  },
-  {
     id: "copa-2026",
     title: "Copa do Mundo 2026",
     subtitle: "1 categoria",
@@ -201,8 +193,7 @@ export const MODULES: Module[] = [
     id: "classicos-desenhos",
     title: "Coleção Clássicos dos Desenhos 3D",
     subtitle: "7 categorias",
-    // TODO: trocar pela imagem própria desta coleção (placeholder por enquanto).
-    image: "/pacote-articulados.jpg",
+    image: "/desenhos-classicos.webp",
     status: "manutencao_parcial",
     categories: [
       soon("Tartarugas Ninja"),
@@ -238,8 +229,7 @@ export const MODULES: Module[] = [
     id: "calculadora",
     title: "Calculadora de Precificação Profissional",
     subtitle: "1 categoria",
-    // TODO: trocar pela imagem própria da calculadora (placeholder por enquanto).
-    image: "/logo-megabrain.png",
+    image: "/calculadora-precificacao.png",
     status: "ok",
     categories: [
       link(
@@ -252,8 +242,7 @@ export const MODULES: Module[] = [
     id: "nichos-lucrativos",
     title: "Os 15 Nichos Mais Lucrativos",
     subtitle: "Guia em PDF",
-    // TODO: trocar pela imagem própria do guia (placeholder por enquanto).
-    image: "/logo-megabrain.png",
+    image: "/15-nichos.png",
     status: "ok",
     pdf: "/guia-nichos.pdf",
     categories: [],
@@ -262,8 +251,7 @@ export const MODULES: Module[] = [
     id: "guia-vendedor",
     title: "Guia Completo do Vendedor 3D",
     subtitle: "Guia em PDF",
-    // TODO: trocar pela imagem própria do guia (placeholder por enquanto).
-    image: "/logo-megabrain.png",
+    image: "/guia-do-vendedor.png",
     status: "ok",
     pdf: "/guia-completo-vendedor-3d.pdf",
     categories: [],
